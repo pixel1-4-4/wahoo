@@ -15,7 +15,7 @@ KERNEL_DTB=${TOP}/${OBJ}/$2
 DTBO=${TOP}/${OBJ}/$3
 DTBC_DIR=${TOP}/${OBJ}
 
-trap "rm -rf ${overlay_dir}; set +x; exit" 1 SIGINT
+trap "rm -rf ${overlay_dir}; set +x; exit" SIGINT
 
 cd ${overlay_dir}
 
