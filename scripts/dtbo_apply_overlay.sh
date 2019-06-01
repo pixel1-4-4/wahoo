@@ -6,7 +6,6 @@
 # to the linux kernel is done on the host side with this script.
 
 set -x
-set -e
 
 # prepare overlay workspace
 overlay_dir=`mktemp -d -t overlay.XXXXXXXXXX`
@@ -16,7 +15,7 @@ KERNEL_DTB=${TOP}/${OBJ}/$2
 DTBO=${TOP}/${OBJ}/$3
 DTBC_DIR=${TOP}/${OBJ}
 
-trap "rm -rf ${overlay_dir}" 0
+trap "rm -rf ${overlay_dir}; set +x; exit" 1 SIGINT
 
 cd ${overlay_dir}
 
@@ -53,4 +52,9 @@ done
 # dtboimg.cfg, where muskie/walley dtbs are before taimen dtbs. Otherwise,
 # muskie/walleye's bootloader may give up looking for dtbs once it sees
 # an invalid dtb, i.e. taimen dtb.
-cat Image `ls -v combined-*.dtb` > ${KERNEL_DTB}
+cat Image.lz4 `ls -v combined-*.dtb` > Image.lz4-dtb
+cp Image.lz4-dtb ${KERNEL_DTB}
+
+rm -rf ${overlay_dir}
+set +x
+trap 0
