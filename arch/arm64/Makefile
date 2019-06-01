@@ -134,12 +134,6 @@ endif
 
 KBUILD_DTBS	:= dtbs
 
-KBUILD_DTBO_IMG := dtbo.img
-
-ifeq ($(CONFIG_BUILD_ARM64_APPLY_DTBO),y)
-	KBUILD_APPLY_DTBO := apply_dtbo
-endif
-
 BUILD_DTC_PATH = $(subst $\",,$(CONFIG_BUILD_ARM64_DTC))
 ifneq ($(BUILD_DTC_PATH),)
 	DTC = $(BUILD_DTC_PATH)
@@ -148,12 +142,6 @@ endif
 BUILD_DTC_FLAGS = $(subst $\",,$(CONFIG_BUILD_ARM64_DTC_FLAGS))
 ifneq ($(BUILD_DTC_FLAGS),)
 	DTC_FLAGS += $(BUILD_DTC_FLAGS)
-endif
-
-all:	$(KBUILD_IMAGE) $(KBUILD_DTBS) $(KBUILD_DTBO_IMG) $(KBUILD_APPLY_DTBO)
-
-ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-export DTC_FLAGS := -@
 endif
 
 all:	$(KBUILD_IMAGE) $(KBUILD_DTBS)
@@ -183,14 +171,6 @@ dtbs_install:
 Image-dtb Image.gz-dtb Image.lz4-dtb: vmlinux scripts dtbs
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
-dtbo.img: $(boot)/dts/dtboimg.cfg dtbs
-	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
-
-PHONY += apply_dtbo
-dtboaply := -f $(if $(KBUILD_SRC),$(srctree)/)scripts/Makefile.dtboaply obj
-apply_dtbo: $(KBUILD_IMAGE) dtbo.img
-	$(Q)$(MAKE) $(dtboaply)=$(boot) KERNEL_DTB=$(KBUILD_IMAGE) DTBO=dtbo.img
-
 PHONY += vdso_install
 vdso_install:
 	$(Q)$(MAKE) $(build)=arch/arm64/kernel/vdso $@
@@ -199,21 +179,6 @@ vdso_install:
 archclean:
 	$(Q)$(MAKE) $(clean)=$(boot)
 	$(Q)$(MAKE) $(clean)=$(boot)/dts
-
-CLEAN_FILES += $(boot)/Image $(boot)/Image-dtb $(boot)/Image.* $(boot)/dtbo.img $(boot)/*.dtbc
-MRPROPER_FILES += $(boot)/Image $(boot)/Image-dtb $(boot)/Image.* $(boot)/dtbo.img $(boot)/*.dtbc
-
-# We need to generate vdso-offsets.h before compiling certain files in kernel/.
-# In order to do that, we should use the archprepare target, but we can't since
-# asm-offsets.h is included in some files used to generate vdso-offsets.h, and
-# asm-offsets.h is built in prepare0, for which archprepare is a dependency.
-# Therefore we need to generate the header after prepare0 has been made, hence
-# this hack.
-prepare: vdso_prepare
-vdso_prepare: prepare0
-	$(Q)$(MAKE) $(build)=arch/arm64/kernel/vdso include/generated/vdso-offsets.h
-	$(if $(CONFIG_VDSO32),$(Q)$(MAKE) $(build)=arch/arm64/kernel/vdso32 \
-					  include/generated/vdso32-offsets.h)
 
 define archhelp
   echo  '* Image.gz      - Compressed kernel image (arch/$(ARCH)/boot/Image.gz)'
