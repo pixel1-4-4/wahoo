@@ -114,6 +114,4 @@ source "drivers/staging/easel/regulator/Kconfig"
 
 source "drivers/staging/wlan_mac/Kconfig"
 
-source "drivers/staging/qcacld-2.0/Kconfig"
-
 endif # STAGING
